@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="it" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>KickPredict 192h - Pronostici Calcio HT & Over</title>
+    <meta name="description" content="PWA responsive per smartphone con analisi e pronostici calcistici sulle 192 ore (Top 4 Leghe): Over 1.5 1° Tempo, Combo HT + Over 2.5 HT, Schedina Cinquina stampabile e Risultato Esatto con metriche xG." />
+    <meta property="og:title" content="KickPredict 192h - Pronostici Calcio HT & Over" />
+    <meta property="og:description" content="PWA responsive per smartphone con analisi e pronostici calcistici sulle 192 ore (Top 4 Leghe): Over 1.5 1° Tempo, Combo HT + Over 2.5 HT, Schedina Cinquina stampabile e Risultato Esatto con metriche xG." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#0B0F19" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="KickPredict" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      // Gracefully silence harmless Vite WebSocket HMR errors in Cloud Run iframe
+      window.addEventListener('error', function(e) {
+        if (e.message && (e.message.includes('WebSocket') || e.message.includes('closed without opened'))) {
+          e.preventDefault();
+          e.stopPropagation();
+          return true;
+        }
+      });
+      window.addEventListener('unhandledrejection', function(e) {
+        if (e.reason && (e.reason.message?.includes('WebSocket') || String(e.reason).includes('WebSocket'))) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      });
+    </script>
+  </head>
+  <body class="bg-[#0B0F19] text-slate-100 antialiased selection:bg-emerald-500/30 selection:text-emerald-300">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

@@ -1,0 +1,6 @@
+{
+  "name": "KickPredict 192h - Pronostici Calcio HT & Over",
+  "description": "PWA responsive per smartphone con analisi e pronostici calcistici sulle 192 ore (Top 4 Leghe): Over 1.5 1° Tempo, Combo HT + Over 2.5 HT, Schedina Cinquina stampabile e Risultato Esatto con metriche xG.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
