@@ -69,25 +69,25 @@ export default function App() {
         const json: PredictionsData = await res.json();
         setData(json);
 
-        // Auto-select the Top 5 for the initial tab if ticket is empty
-    const initialList = (activeTab === 'OVER_15_HT' ? json?.topOver15HT : json?.topComboHT) || [];
-    setSelections((prev) => {
-      const prevSafe = prev || [];
-      if (prevSafe.length === 0 && Array.isArray(initialList) && initialList.length > 0) {
-        return initialList.slice(0, 5).map((m) => ({
-          matchId: m?.id,
-          match: m,
-          betType: activeTab,
-          betLabel: activeTab === 'OVER_15_HT' ? m?.over15Market?.label : m?.comboHTMarket?.label,
-          odd: activeTab === 'OVER_15_HT' ? m?.over15Market?.odd : m?.comboHTMarket?.odd,
-          probability:
-            activeTab === 'OVER_15_HT'
-              ? m?.over15Market?.probability
-              : m?.comboHTMarket?.probability,
-        }));
-      }
-      return prevSafe;
-    });
+        // Auto-select the Top 5 for the initial tab if ticket is empty (Fully Safe)
+        const initialList = (activeTab === 'OVER_15_HT' ? json?.topOver15HT : json?.topComboHT) || [];
+        setSelections((prev) => {
+          const prevSafe = prev || [];
+          if (prevSafe.length === 0 && Array.isArray(initialList) && initialList.length > 0) {
+            return initialList.slice(0, 5).map((m) => ({
+              matchId: m?.id,
+              match: m,
+              betType: activeTab,
+              betLabel: activeTab === 'OVER_15_HT' ? m?.over15Market?.label : m?.comboHTMarket?.label,
+              odd: activeTab === 'OVER_15_HT' ? m?.over15Market?.odd : m?.comboHTMarket?.odd,
+              probability:
+                activeTab === 'OVER_15_HT'
+                  ? m?.over15Market?.probability
+                  : m?.comboHTMarket?.probability,
+            }));
+          }
+          return prevSafe;
+        });
       } catch (err) {
         console.error('Fetch error:', err);
         setError('Impossibile caricare i dati delle previsioni sulle 192 ore. Riprova tra poco.');
@@ -103,23 +103,25 @@ export default function App() {
     fetchPredictions(false);
   }, [fetchPredictions]);
 
-  // Handle Tab Switch
+  // Handle Tab Switch (Fully Safe)
   const handleTabChange = (tab: 'OVER_15_HT' | 'COMBO_HT') => {
     setActiveTab(tab);
     if (!data) return;
 
-    // Refresh default selections to match the active tab's top 5
-    const targetList = tab === 'OVER_15_HT' ? data.topOver15HT : data.topComboHT;
+    // Refresh default selections to match the active tab's top 5 securely
+    const targetList = (tab === 'OVER_15_HT' ? data?.topOver15HT : data?.topComboHT) || [];
+    if (!Array.isArray(targetList) || targetList.length === 0) return;
+
     setSelections(
       targetList.slice(0, 5).map((m) => {
-        const odd = customOddsMap[`${m.id}_${tab}`] || (tab === 'OVER_15_HT' ? m.over15Market.odd : m.comboHTMarket.odd);
+        const odd = customOddsMap[`${m?.id}_${tab}`] || (tab === 'OVER_15_HT' ? m?.over15Market?.odd : m?.comboHTMarket?.odd) || 1.0;
         return {
-          matchId: m.id,
+          matchId: m?.id,
           match: m,
           betType: tab,
-          betLabel: tab === 'OVER_15_HT' ? m.over15Market.label : m.comboHTMarket.label,
+          betLabel: tab === 'OVER_15_HT' ? m?.over15Market?.label : m?.comboHTMarket?.label,
           odd,
-          probability: tab === 'OVER_15_HT' ? m.over15Market.probability : m.comboHTMarket.probability,
+          probability: tab === 'OVER_15_HT' ? m?.over15Market?.probability : m?.comboHTMarket?.probability,
         };
       })
     );
@@ -128,64 +130,64 @@ export default function App() {
   // Toggle match in ticket
   const handleToggleSelect = (match: Match) => {
     setSelections((prev) => {
-      const exists = prev.some((s) => s.matchId === match.id);
+      const prevSafe = prev || [];
+      const exists = prevSafe.some((s) => s?.matchId === match?.id);
       if (exists) {
-        return prev.filter((s) => s.matchId !== match.id);
+        return prevSafe.filter((s) => s?.matchId !== match?.id);
       } else {
         const odd =
-          customOddsMap[`${match.id}_${activeTab}`] ||
-          (activeTab === 'OVER_15_HT' ? match.over15Market.odd : match.comboHTMarket.odd);
+          customOddsMap[`${match?.id}_${activeTab}`] ||
+          (activeTab === 'OVER_15_HT' ? match?.over15Market?.odd : match?.comboHTMarket?.odd) || 1.0;
         const newSel: TicketSelection = {
-          matchId: match.id,
+          matchId: match?.id,
           match,
           betType: activeTab,
-          betLabel: activeTab === 'OVER_15_HT' ? match.over15Market.label : match.comboHTMarket.label,
+          betLabel: activeTab === 'OVER_15_HT' ? match?.over15Market?.label : match?.comboHTMarket?.label,
           odd,
           probability:
             activeTab === 'OVER_15_HT'
-              ? match.over15Market.probability
-              : match.comboHTMarket.probability,
+              ? match?.over15Market?.probability
+              : match?.comboHTMarket?.probability,
         };
-        return [...prev, newSel];
+        return [...prevSafe, newSel];
       }
     });
   };
 
   // Remove selection from ticket
   const handleRemoveSelection = (matchId: string | number) => {
-    setSelections((prev) => prev.filter((s) => s.matchId !== matchId));
+    setSelections((prev) => (prev || []).filter((s) => s?.matchId !== matchId));
   };
 
-  // Update odd when user edits Sisal input
+  // Update odd when user edits input
   const handleUpdateOdd = (matchId: string | number, newOdd: number) => {
     setCustomOddsMap((prev) => ({
       ...prev,
       [`${matchId}_${activeTab}`]: newOdd,
     }));
     setSelections((prev) =>
-      prev.map((s) => (s.matchId === matchId ? { ...s, odd: newOdd } : s))
+      (prev || []).map((s) => (s?.matchId === matchId ? { ...s, odd: newOdd } : s))
     );
   };
 
-  // 1. FILTRO E SELEZIONE PER CAMPIONATO:
-  // "Quando è selezionato 'Tutti', mostra i 5 migliori pronostici generali della scheda attiva.
-  //  Quando l'utente clicca su un singolo campionato, filtra la vista e mostra i 3 migliori pronostici specifici."
+  // FILTRO E SELEZIONE PER CAMPIONATO:
   const displayedMatches = useMemo(() => {
     if (!data) return [];
 
     if (selectedLeague === 'ALL') {
-      return activeTab === 'OVER_15_HT' ? data.topOver15HT : data.topComboHT;
+      return (activeTab === 'OVER_15_HT' ? data?.topOver15HT : data?.topComboHT) || [];
     }
 
-    // Filter allMatches by specific league
-    const leagueMatches = data.allMatches.filter((m) => m.league.id === selectedLeague);
+    // Filter allMatches by specific league safely
+    const allMatches = Array.isArray(data?.allMatches) ? data.allMatches : [];
+    const leagueMatches = allMatches.filter((m) => m?.league?.id === selectedLeague);
 
-    // Sort by active tab metric
+    // Sort by active tab metric safely
     const sorted = [...leagueMatches].sort((a, b) => {
       if (activeTab === 'OVER_15_HT') {
-        return b.over15Market.probability - a.over15Market.probability;
+        return (b?.over15Market?.probability || 0) - (a?.over15Market?.probability || 0);
       } else {
-        return b.comboHTMarket.probability - a.comboHTMarket.probability;
+        return (b?.comboHTMarket?.probability || 0) - (a?.comboHTMarket?.probability || 0);
       }
     });
 
@@ -195,28 +197,27 @@ export default function App() {
 
   // Select all displayed matches for the ticket
   const handleSelectAllTop = () => {
-    if (!displayedMatches.length) return;
+    if (!Array.isArray(displayedMatches) || displayedMatches.length === 0) return;
     setSelections(
       displayedMatches.map((m) => {
         const odd =
-          customOddsMap[`${m.id}_${activeTab}`] ||
-          (activeTab === 'OVER_15_HT' ? m.over15Market.odd : m.comboHTMarket.odd);
+          customOddsMap[`${m?.id}_${activeTab}`] ||
+          (activeTab === 'OVER_15_HT' ? m?.over15Market?.odd : m?.comboHTMarket?.odd) || 1.0;
         return {
-          matchId: m.id,
+          matchId: m?.id,
           match: m,
           betType: activeTab,
-          betLabel: activeTab === 'OVER_15_HT' ? m.over15Market.label : m.comboHTMarket.label,
+          betLabel: activeTab === 'OVER_15_HT' ? m?.over15Market?.label : m?.comboHTMarket?.label,
           odd,
           probability:
             activeTab === 'OVER_15_HT'
-              ? m.over15Market.probability
-              : m.comboHTMarket.probability,
+              ? m?.over15Market?.probability
+              : m?.comboHTMarket?.probability,
         };
       })
     );
   };
 
-  // 3. PULSANTE E FUNZIONE DI STAMPA SCHEDINA:
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
   const handleDirectPrint = () => {
@@ -227,15 +228,15 @@ export default function App() {
   };
 
   const handleDirectDownloadPDF = async () => {
-    if (selections.length === 0 || isDownloadingPdf) return;
+    if (!Array.isArray(selections) || selections.length === 0 || isDownloadingPdf) return;
     setIsDownloadingPdf(true);
     try {
-      const totalMultiplier = selections.reduce((acc, curr) => acc * (curr.odd || 1), 1);
+      const totalMultiplier = selections.reduce((acc, curr) => acc * (curr?.odd || 1), 1);
       const roundedMultiplier = Math.round(totalMultiplier * 100) / 100;
       const bonusMultiplier = selections.length >= 5 ? 1.05 : 1.0;
       const potentialWin = Math.round(stake * roundedMultiplier * bonusMultiplier * 100) / 100;
       const ticketCode = `KP192-${Math.abs(
-        selections.reduce((acc, s) => acc + String(s.matchId).charCodeAt(0), 192847)
+        selections.reduce((acc, s) => acc + String(s?.matchId || '').charCodeAt(0), 192847)
       ).toString(36).toUpperCase()}-IT`;
 
       await downloadTicketPDF(
@@ -265,9 +266,8 @@ export default function App() {
     }
   };
 
-  // Get active league label for title
   const currentLeagueLabel = useMemo(() => {
-    const found = LEAGUE_OPTIONS.find((l) => l.id === selectedLeague);
+    const found = LEAGUE_OPTIONS.find((l) => l?.id === selectedLeague);
     return found ? found.label : 'Tutti';
   }, [selectedLeague]);
 
@@ -281,9 +281,8 @@ export default function App() {
         </div>
       )}
 
-      {/* TOP NAVIGATION BAR (Top Bar Contract: 3 Zones) */}
+      {/* TOP NAVIGATION BAR */}
       <header className="sticky top-0 z-40 w-full max-w-full overflow-hidden bg-[#0B0F19]/90 backdrop-blur-md border-b border-slate-800/80 px-2.5 sm:px-6 py-2 sm:py-3 flex items-center justify-between gap-1.5 sm:gap-3">
-        {/* Zone 1: Brand wordmark */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 min-w-0">
           <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-cyan-500 p-0.5 flex items-center justify-center shadow-md shadow-emerald-500/20 shrink-0">
             <div className="w-full h-full bg-[#0B0F19] rounded-[10px] flex items-center justify-center">
@@ -295,7 +294,6 @@ export default function App() {
           </span>
         </div>
 
-        {/* Zone 2: Navigation Links (Desktop) */}
         <nav className="hidden md:flex items-center gap-3 lg:gap-4 text-xs font-medium text-slate-400">
           {LEAGUE_OPTIONS.filter((l) => l.id !== 'ALL').map((l) => (
             <button
@@ -310,10 +308,8 @@ export default function App() {
           ))}
         </nav>
 
-        {/* Zone 3: Actions (Install PWA + Refresh + Settings) */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <PWAInstallButton />
-
           <button
             onClick={() => fetchPredictions(true)}
             disabled={refreshing}
@@ -323,7 +319,6 @@ export default function App() {
             <RotateCw className={`w-3.5 h-3.5 text-cyan-400 ${refreshing ? 'animate-spin' : ''}`} />
             <span className="hidden xs:inline">192h</span>
           </button>
-
           <button
             onClick={() => setIsSettingsOpen(true)}
             className="p-1.5 rounded-xl border border-slate-800 bg-slate-900 text-slate-400 hover:text-slate-200 hover:bg-slate-800 transition cursor-pointer shrink-0"
@@ -335,9 +330,8 @@ export default function App() {
         </div>
       </header>
 
-      {/* MAIN CONTENT CONTAINER (Zero horizontal scroll guaranteed) */}
+      {/* MAIN CONTENT CONTAINER */}
       <main className="flex-1 w-full max-w-full sm:max-w-6xl mx-auto px-2 sm:px-4 md:px-6 py-3 sm:py-5 space-y-3 sm:space-y-5 overflow-hidden">
-        {/* Sub-header Context Bar */}
         <div className="w-full max-w-full overflow-hidden flex flex-wrap items-center justify-between text-[9px] sm:text-xs text-slate-400 gap-1 pb-0.5">
           <div className="flex items-center gap-1 truncate min-w-0 flex-1">
             <span className="flex items-center gap-1 text-slate-300 truncate">
@@ -365,7 +359,6 @@ export default function App() {
           </div>
         </div>
 
-        {/* 1. HIGHLIGHTED CINQUINA SUMMARY BOX */}
         <CinquinaBox
           selections={selections}
           stake={stake}
@@ -379,10 +372,9 @@ export default function App() {
           onTabChange={handleTabChange}
         />
 
-        {/* 2. REAL-TIME TEAM SEARCH & FILTRO CAMPIONATO 192H */}
         {data && (
           <TeamExactScoreSearch
-            matches={data.allMatches}
+            matches={data?.allMatches || []}
             selectedLeague={selectedLeague}
             onSelectLeague={setSelectedLeague}
             onSelectMatchForTicket={(match) => {
@@ -392,7 +384,6 @@ export default function App() {
           />
         )}
 
-        {/* 3. LISTA MATCH PRONOSTICI (Zero overflow e testi protetti) */}
         <section className="w-full max-w-full overflow-hidden space-y-2.5 sm:space-y-3.5">
           <div className="w-full max-w-full overflow-hidden border-b border-slate-800 pb-2">
             <h3 className="text-xs sm:text-base md:text-lg font-bold text-slate-100 flex items-center gap-1.5 flex-wrap truncate">
@@ -412,7 +403,6 @@ export default function App() {
             </p>
           </div>
 
-          {/* Tab Explanation Banner */}
           <div className="w-full max-w-full overflow-hidden p-2 sm:p-2.5 rounded-xl bg-slate-900/60 border border-slate-800/80 text-[10px] sm:text-xs text-slate-300 flex items-start gap-1.5">
             <HelpCircle className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
             <div className="min-w-0 flex-1 overflow-hidden break-words">
@@ -432,7 +422,6 @@ export default function App() {
             </div>
           </div>
 
-          {/* LOADING & ERROR STATES */}
           {loading ? (
             <div className="py-12 sm:py-16 text-center space-y-2.5 w-full max-w-full overflow-hidden">
               <div className="w-8 h-8 sm:w-10 sm:h-10 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto" />
@@ -455,13 +444,12 @@ export default function App() {
               </button>
             </div>
           ) : (
-            /* MATCH CARDS LIST (Top 5 se Tutti, Top 3 se campionato specifico) */
             <div className="w-full max-w-full overflow-hidden grid grid-cols-1 gap-2.5 sm:gap-3.5">
               {displayedMatches.map((match, index) => {
-                const isSelected = selections.some((s) => s.matchId === match.id);
+                const isSelected = (selections || []).some((s) => s?.matchId === match?.id);
                 return (
                   <MatchCard
-                    key={`${match.id}_${activeTab}_${selectedLeague}`}
+                    key={`${match?.id || index}_${activeTab}_${selectedLeague}`}
                     match={match}
                     activeTab={activeTab}
                     isSelected={isSelected}
@@ -486,7 +474,6 @@ export default function App() {
         </p>
       </footer>
 
-      {/* PRINTABLE TICKET MODAL */}
       <TicketModal
         isOpen={isTicketModalOpen}
         onClose={() => setIsTicketModalOpen(false)}
@@ -496,7 +483,6 @@ export default function App() {
         onStakeChange={setStake}
       />
 
-      {/* SETTINGS / API KEY MODAL */}
       {isSettingsOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-2xl bg-[#0F172A] border border-slate-700 p-4 sm:p-6 space-y-3 sm:space-y-4 text-slate-100 shadow-2xl overflow-hidden max-w-[95vw]">
