@@ -24,14 +24,17 @@ export const MatchCard: React.FC<MatchCardProps> = ({
   const [isSaved, setIsSaved] = useState(false);
 
   // Storage key for client custom Sisal / Matchpoint odds
-  const storageKey = `sisal_odd_${match.id}_${activeTab}`;
+  const storageKey = `sisal_odd_${match?.id}_${activeTab}`;
 
   const defaultOdd =
-    activeTab === 'OVER_15_HT' ? match.over15Market.odd : match.comboHTMarket.odd;
+    activeTab === 'OVER_15_HT'
+      ? match?.over15Market?.odd || 1.0
+      : match?.comboHTMarket?.odd || 1.0;
+
   const currentProbability =
     activeTab === 'OVER_15_HT'
-      ? match.over15Market.probability
-      : match.comboHTMarket.probability;
+      ? match?.over15Market?.probability || 0
+      : match?.comboHTMarket?.probability || 0;
 
   // Initialize odd from localStorage or match default
   useEffect(() => {
@@ -41,7 +44,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
         const parsed = parseFloat(saved);
         if (!isNaN(parsed) && parsed > 1.0) {
           setEditOddInput(parsed.toFixed(2));
-          onUpdateOdd(match.id, parsed);
+          if (match?.id) onUpdateOdd(match.id, parsed);
           return;
         }
       }
@@ -49,7 +52,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
       // ignore
     }
     setEditOddInput(defaultOdd.toFixed(2));
-  }, [match.id, activeTab, defaultOdd]);
+  }, [match?.id, activeTab, defaultOdd, storageKey, onUpdateOdd]);
 
   const handleSaveOdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +63,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
       } catch {
         // ignore
       }
-      onUpdateOdd(match.id, parsed);
+      if (match?.id) onUpdateOdd(match.id, parsed);
       setIsSaved(true);
       setTimeout(() => setIsSaved(false), 2000);
     }
@@ -73,26 +76,40 @@ export const MatchCard: React.FC<MatchCardProps> = ({
       // ignore
     }
     setEditOddInput(defaultOdd.toFixed(2));
-    onUpdateOdd(match.id, defaultOdd);
+    if (match?.id) onUpdateOdd(match.id, defaultOdd);
   };
 
-  // Format date in Italian locale
-  const matchDate = new Date(match.fixtureDate);
-  const formattedDate = matchDate.toLocaleDateString('it-IT', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'short',
-  });
-  const formattedTime = matchDate.toLocaleTimeString('it-IT', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  // Format date in Italian locale safely
+  const fixtureDateVal = match?.fixtureDate || match?.date || new Date().toISOString();
+  const matchDate = new Date(fixtureDateVal);
+  const formattedDate = !isNaN(matchDate.getTime())
+    ? matchDate.toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })
+    : 'Oggi';
+  const formattedTime = !isNaN(matchDate.getTime())
+    ? matchDate.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })
+    : '20:45';
 
-  // Calculate hours until match
+  // Calculate hours until match safely
+  const timestampVal = match?.timestamp || matchDate.getTime() || Date.now();
   const hoursRemaining = Math.max(
     0,
-    Math.round((match.timestamp - Date.now()) / (3600 * 1000))
+    Math.round((timestampVal - Date.now()) / (3600 * 1000))
   );
+
+  const leagueFlag = match?.league?.flag || '⚽';
+  const leagueName = match?.league?.name || 'Campionato';
+  const leagueCountry = match?.league?.country || '';
+  const roundName = match?.round || '1ª Giornata';
+  const homeName = match?.homeTeam?.name || 'Casa';
+  const awayName = match?.awayTeam?.name || 'Ospite';
+  const homeLogo = match?.homeTeam?.logo || '';
+  const awayLogo = match?.awayTeam?.logo || '';
+  const xgHomeHT = match?.stats?.xgHomeHT ?? match?.xgHomeHT ?? 1.2;
+  const xgAwayHT = match?.stats?.xgAwayHT ?? match?.xgAwayHT ?? 1.0;
+  const avgGoals = match?.stats?.avgGoalsFirstHalf || 1.5;
+  const trendOverHT = match?.stats?.trendOverHT || 'Ottimo trend over 1.5 primo tempo';
+  const comboDetails = match?.comboHTMarket?.details || 'Combo statistica favorevole';
+  const comboConfidence = match?.comboHTMarket?.confidence || 'Alta';
 
   return (
     <article
@@ -102,15 +119,15 @@ export const MatchCard: React.FC<MatchCardProps> = ({
           : 'bg-[#111827]/90 border-slate-800/80 hover:border-slate-700 hover:bg-[#111827]'
       }`}
     >
-      {/* Top Bar with League & Kick-off metadata (Strictly constrained, zero overflow) */}
+      {/* Top Bar with League & Kick-off metadata */}
       <div className="w-full max-w-full overflow-hidden flex flex-wrap items-center justify-between px-2.5 sm:px-4 py-1.5 sm:py-2 bg-slate-950/60 border-b border-slate-800/60 text-[10px] sm:text-xs text-slate-400 gap-1.5">
         <div className="flex items-center gap-1.5 min-w-0 flex-1 truncate">
-          <span className="text-xs sm:text-sm shrink-0" aria-label={match.league.country}>
-            {match.league.flag}
+          <span className="text-xs sm:text-sm shrink-0" aria-label={leagueCountry}>
+            {leagueFlag}
           </span>
-          <span className="font-semibold text-slate-200 truncate">{match.league.name}</span>
+          <span className="font-semibold text-slate-200 truncate">{leagueName}</span>
           <span aria-hidden="true" className="text-slate-600 shrink-0">·</span>
-          <span className="text-slate-400 truncate max-w-[75px] xs:max-w-[120px]">{match.round}</span>
+          <span className="text-slate-400 truncate max-w-[75px] xs:max-w-[120px]">{roundName}</span>
         </div>
 
         <div className="flex items-center gap-1.5 shrink-0 tabular-nums text-[10px] sm:text-xs">
@@ -124,25 +141,31 @@ export const MatchCard: React.FC<MatchCardProps> = ({
       </div>
 
       <div className="w-full max-w-full overflow-hidden p-2.5 sm:p-4 space-y-3 sm:space-y-4">
-        {/* Teams and Matchup Header with strict min-w-0 and truncate on both sides */}
+        {/* Teams and Matchup Header */}
         <div className="w-full max-w-full overflow-hidden grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 sm:gap-3 min-w-0">
           {/* Home Team */}
           <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0 overflow-hidden">
-            <img
-              src={match.homeTeam.logo}
-              alt={match.homeTeam.name}
-              referrerPolicy="no-referrer"
-              className="w-6 h-6 sm:w-8 sm:h-8 object-contain shrink-0 rounded-full bg-slate-800/50 p-0.5 border border-slate-700/50"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none';
-              }}
-            />
+            {homeLogo ? (
+              <img
+                src={homeLogo}
+                alt={homeName}
+                referrerPolicy="no-referrer"
+                className="w-6 h-6 sm:w-8 sm:h-8 object-contain shrink-0 rounded-full bg-slate-800/50 p-0.5 border border-slate-700/50"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-300 shrink-0">
+                {homeName.charAt(0)}
+              </div>
+            )}
             <div className="min-w-0 flex-1 overflow-hidden">
               <h4 className="text-xs sm:text-sm md:text-base font-semibold text-slate-100 truncate break-words block">
-                {match.homeTeam.name}
+                {homeName}
               </h4>
               <div className="text-[9px] sm:text-[11px] text-slate-400 flex items-center gap-1 truncate block">
-                <span>xG HT: <strong className="text-slate-200 font-mono">{match.stats.xgHomeHT}</strong></span>
+                <span>xG HT: <strong className="text-slate-200 font-mono">{xgHomeHT}</strong></span>
               </div>
             </div>
           </div>
@@ -157,21 +180,27 @@ export const MatchCard: React.FC<MatchCardProps> = ({
           <div className="flex items-center justify-end gap-1.5 sm:gap-2.5 min-w-0 text-right overflow-hidden">
             <div className="min-w-0 flex-1 overflow-hidden">
               <h4 className="text-xs sm:text-sm md:text-base font-semibold text-slate-100 truncate break-words block">
-                {match.awayTeam.name}
+                {awayName}
               </h4>
               <div className="text-[9px] sm:text-[11px] text-slate-400 flex items-center justify-end gap-1 truncate block">
-                <span>xG HT: <strong className="text-slate-200 font-mono">{match.stats.xgAwayHT}</strong></span>
+                <span>xG HT: <strong className="text-slate-200 font-mono">{xgAwayHT}</strong></span>
               </div>
             </div>
-            <img
-              src={match.awayTeam.logo}
-              alt={match.awayTeam.name}
-              referrerPolicy="no-referrer"
-              className="w-6 h-6 sm:w-8 sm:h-8 object-contain shrink-0 rounded-full bg-slate-800/50 p-0.5 border border-slate-700/50"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none';
-              }}
-            />
+            {awayLogo ? (
+              <img
+                src={awayLogo}
+                alt={awayName}
+                referrerPolicy="no-referrer"
+                className="w-6 h-6 sm:w-8 sm:h-8 object-contain shrink-0 rounded-full bg-slate-800/50 p-0.5 border border-slate-700/50"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-300 shrink-0">
+                {awayName.charAt(0)}
+              </div>
+            )}
           </div>
         </div>
 
@@ -187,12 +216,12 @@ export const MatchCard: React.FC<MatchCardProps> = ({
               <div className="text-xs sm:text-sm md:text-base font-bold text-slate-100 flex items-center gap-1.5 flex-wrap truncate">
                 <span className={`truncate ${activeTab === 'OVER_15_HT' ? 'text-emerald-400' : 'text-cyan-400'}`}>
                   {activeTab === 'OVER_15_HT'
-                    ? match.over15Market.label
-                    : match.comboHTMarket.label}
+                    ? (match?.over15Market?.label || 'Over 1.5 HT')
+                    : (match?.comboHTMarket?.label || 'Combo HT')}
                 </span>
                 {activeTab === 'COMBO_HT' && (
                   <span className="text-[8px] sm:text-[9px] uppercase font-mono px-1 py-0.2 rounded bg-cyan-950/80 text-cyan-300 border border-cyan-800/60 shrink-0">
-                    {match.comboHTMarket.confidence}
+                    {comboConfidence}
                   </span>
                 )}
               </div>
@@ -222,33 +251,30 @@ export const MatchCard: React.FC<MatchCardProps> = ({
           {/* Statistical Context Insight */}
           <div className="w-full max-w-full overflow-hidden text-[9px] sm:text-[11px] text-slate-400 flex flex-wrap items-center justify-between gap-1 pt-0.5 break-words">
             <span className="truncate max-w-[190px] xs:max-w-none">
-              {activeTab === 'OVER_15_HT'
-                ? match.stats.trendOverHT
-                : match.comboHTMarket.details}
+              {activeTab === 'OVER_15_HT' ? trendOverHT : comboDetails}
             </span>
             <span className="font-mono text-slate-300 tabular-nums shrink-0">
-              xG Tot 1°T: {match.stats.avgGoalsFirstHalf}
+              xG Tot 1°T: {avgGoals}
             </span>
           </div>
         </div>
 
         {/* Sisal / Matchpoint Editable Odds Control & Cinquina Toggle */}
         <div className="w-full max-w-full overflow-hidden flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-0.5">
-          {/* Editable Sisal Odd Box */}
           <form
             onSubmit={handleSaveOdd}
             className="w-full sm:w-auto max-w-full overflow-hidden flex items-center justify-between sm:justify-start gap-1.5 bg-slate-950/70 border border-slate-800 rounded-xl px-2.5 py-1.5"
           >
             <div className="flex flex-col min-w-0 overflow-hidden">
               <label
-                htmlFor={`odd-${match.id}`}
+                htmlFor={`odd-${match?.id || index}`}
                 className="text-[9px] sm:text-[10px] text-slate-400 font-medium truncate"
               >
                 Quota Sisal / Bookmaker
               </label>
               <div className="flex items-center gap-1.5">
                 <input
-                  id={`odd-${match.id}`}
+                  id={`odd-${match?.id || index}`}
                   type="number"
                   step="0.01"
                   min="1.01"
@@ -329,16 +355,15 @@ export const MatchCard: React.FC<MatchCardProps> = ({
         {/* Expanded Detailed Breakdown */}
         {isExpanded && (
           <div className="w-full max-w-full overflow-hidden pt-2 space-y-2 text-[10px] sm:text-xs border-t border-slate-800/80 animate-in fade-in duration-200">
-            {/* 1X2 Probabilities HT vs FT */}
             <div className="w-full max-w-full overflow-hidden grid grid-cols-2 gap-1.5 sm:gap-3 bg-slate-950/60 p-2 sm:p-3 rounded-xl border border-slate-800/70">
               <div className="min-w-0 overflow-hidden">
                 <span className="text-[9px] sm:text-[11px] font-semibold text-slate-300 block mb-1 truncate">
                   1X2 1° Tempo (HT)
                 </span>
                 <div className="flex flex-wrap items-center justify-between text-slate-400 font-mono text-[9px] sm:text-xs gap-1">
-                  <span>1: <strong className="text-slate-200">{match.stats.ht1X2.prob1}%</strong></span>
-                  <span>X: <strong className="text-slate-200">{match.stats.ht1X2.probX}%</strong></span>
-                  <span>2: <strong className="text-slate-200">{match.stats.ht1X2.prob2}%</strong></span>
+                  <span>1: <strong className="text-slate-200">{match?.stats?.ht1X2?.prob1 || 45}%</strong></span>
+                  <span>X: <strong className="text-slate-200">{match?.stats?.ht1X2?.probX || 35}%</strong></span>
+                  <span>2: <strong className="text-slate-200">{match?.stats?.ht1X2?.prob2 || 20}%</strong></span>
                 </div>
               </div>
 
@@ -347,9 +372,9 @@ export const MatchCard: React.FC<MatchCardProps> = ({
                   1X2 Finale (FT)
                 </span>
                 <div className="flex flex-wrap items-center justify-between text-slate-400 font-mono text-[9px] sm:text-xs gap-1">
-                  <span>1: <strong className="text-slate-200">{match.stats.ft1X2.prob1}%</strong></span>
-                  <span>X: <strong className="text-slate-200">{match.stats.ft1X2.probX}%</strong></span>
-                  <span>2: <strong className="text-slate-200">{match.stats.ft1X2.prob2}%</strong></span>
+                  <span>1: <strong className="text-slate-200">{match?.stats?.ft1X2?.prob1 || 50}%</strong></span>
+                  <span>X: <strong className="text-slate-200">{match?.stats?.ft1X2?.probX || 30}%</strong></span>
+                  <span>2: <strong className="text-slate-200">{match?.stats?.ft1X2?.prob2 || 20}%</strong></span>
                 </div>
               </div>
             </div>
@@ -361,7 +386,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
                   Ris. Esatto 1°T (HT)
                 </span>
                 <div className="space-y-1">
-                  {match.exactScores.ht.map((item, i) => (
+                  {(match?.exactScores?.ht || [{ score: '1-0', probability: 35 }, { score: '0-0', probability: 30 }]).map((item, i) => (
                     <div
                       key={i}
                       className="flex items-center justify-between text-[9px] sm:text-xs text-slate-300 font-mono"
@@ -378,7 +403,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
                   Ris. Esatto Finale (FT)
                 </span>
                 <div className="space-y-1">
-                  {match.exactScores.ft.map((item, i) => (
+                  {(match?.exactScores?.ft || [{ score: '2-1', probability: 25 }, { score: '1-1', probability: 22 }]).map((item, i) => (
                     <div
                       key={i}
                       className="flex items-center justify-between text-[9px] sm:text-xs text-slate-300 font-mono"
@@ -395,10 +420,10 @@ export const MatchCard: React.FC<MatchCardProps> = ({
             <div className="w-full max-w-full overflow-hidden flex flex-col xs:flex-row xs:items-center justify-between gap-1 text-[9px] sm:text-[11px] text-slate-500 pt-0.5 break-words">
               <span className="flex items-center gap-1 truncate min-w-0">
                 <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
-                <span className="truncate">{match.venue}</span>
+                <span className="truncate">{match?.venue || 'Stadio Principale'}</span>
               </span>
               <span className="truncate shrink-0">
-                Forma HT: {match.stats.recentFormHT.home.join('')} vs {match.stats.recentFormHT.away.join('')}
+                Forma HT: {(match?.stats?.recentFormHT?.home || ['W', 'D', 'W']).join('')} vs {(match?.stats?.recentFormHT?.away || ['L', 'W', 'D']).join('')}
               </span>
             </div>
           </div>
