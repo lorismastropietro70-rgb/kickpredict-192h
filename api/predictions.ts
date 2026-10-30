@@ -10,7 +10,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    // Dati strutturati di test per sbloccare immediatamente la visualizzazione delle 192h
     const mockMatches = [
       {
         id: 101,
@@ -18,6 +17,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         homeTeam: { name: 'Inter', logo: '' },
         awayTeam: { name: 'Milan', logo: '' },
         date: new Date().toISOString(),
+        xgHomeHT: 1.2,
+        xgAwayHT: 0.9,
         over15Market: { label: 'Over 1.5 HT', odd: 1.40, probability: 78 },
         comboHTMarket: { label: '1 + Over 2.5 HT', odd: 2.10, probability: 65 }
       },
@@ -27,6 +28,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         homeTeam: { name: 'Arsenal', logo: '' },
         awayTeam: { name: 'Chelsea', logo: '' },
         date: new Date().toISOString(),
+        xgHomeHT: 1.4,
+        xgAwayHT: 1.1,
         over15Market: { label: 'Over 1.5 HT', odd: 1.35, probability: 82 },
         comboHTMarket: { label: '1X + Over 2.5 HT', odd: 1.95, probability: 70 }
       },
@@ -36,6 +39,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         homeTeam: { name: 'Real Madrid', logo: '' },
         awayTeam: { name: 'Barcelona', logo: '' },
         date: new Date().toISOString(),
+        xgHomeHT: 1.3,
+        xgAwayHT: 1.2,
         over15Market: { label: 'Over 1.5 HT', odd: 1.38, probability: 80 },
         comboHTMarket: { label: '2 + Over 2.5 HT', odd: 2.25, probability: 60 }
       },
@@ -45,6 +50,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         homeTeam: { name: 'Bayern Munich', logo: '' },
         awayTeam: { name: 'Dortmund', logo: '' },
         date: new Date().toISOString(),
+        xgHomeHT: 1.6,
+        xgAwayHT: 1.0,
         over15Market: { label: 'Over 1.5 HT', odd: 1.30, probability: 85 },
         comboHTMarket: { label: '1 + Over 2.5 HT', odd: 1.85, probability: 75 }
       },
@@ -54,6 +61,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         homeTeam: { name: 'Juventus', logo: '' },
         awayTeam: { name: 'Napoli', logo: '' },
         date: new Date().toISOString(),
+        xgHomeHT: 1.1,
+        xgAwayHT: 1.0,
         over15Market: { label: 'Over 1.5 HT', odd: 1.45, probability: 76 },
         comboHTMarket: { label: 'X2 + Over 2.5 HT', odd: 2.15, probability: 62 }
       }
