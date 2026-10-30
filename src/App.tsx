@@ -70,9 +70,9 @@ export default function App() {
         setData(json);
 
         // Auto-select the Top 5 for the initial tab if ticket is empty
-        const initialList = activeTab === 'OVER_15_HT' ? json.topOver15HT : json.topComboHT;
-        setSelections((prev) => {
-          if (prev.length === 0 && initialList.length > 0) {
+        const initialList = (activeTab === 'OVER_15_HT' ? json.topOver15HT : json.topComboHT) || [];
+setSelections((prev) => {
+  if (prev?.length && initialList?.length > 0) {
             return initialList.slice(0, 5).map((m) => ({
               matchId: m.id,
               match: m,
