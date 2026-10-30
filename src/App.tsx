@@ -70,23 +70,24 @@ export default function App() {
         setData(json);
 
         // Auto-select the Top 5 for the initial tab if ticket is empty
-        const initialList = (activeTab === 'OVER_15_HT' ? json.topOver15HT : json.topComboHT) || [];
-setSelections((prev) => {
-  if (prev?.length && initialList?.length > 0) {
-            return initialList.slice(0, 5).map((m) => ({
-              matchId: m.id,
-              match: m,
-              betType: activeTab,
-              betLabel: activeTab === 'OVER_15_HT' ? m.over15Market.label : m.comboHTMarket.label,
-              odd: activeTab === 'OVER_15_HT' ? m.over15Market.odd : m.comboHTMarket.odd,
-              probability:
-                activeTab === 'OVER_15_HT'
-                  ? m.over15Market.probability
-                  : m.comboHTMarket.probability,
-            }));
-          }
-          return prev;
-        });
+    const initialList = (activeTab === 'OVER_15_HT' ? json?.topOver15HT : json?.topComboHT) || [];
+    setSelections((prev) => {
+      const prevSafe = prev || [];
+      if (prevSafe.length === 0 && Array.isArray(initialList) && initialList.length > 0) {
+        return initialList.slice(0, 5).map((m) => ({
+          matchId: m?.id,
+          match: m,
+          betType: activeTab,
+          betLabel: activeTab === 'OVER_15_HT' ? m?.over15Market?.label : m?.comboHTMarket?.label,
+          odd: activeTab === 'OVER_15_HT' ? m?.over15Market?.odd : m?.comboHTMarket?.odd,
+          probability:
+            activeTab === 'OVER_15_HT'
+              ? m?.over15Market?.probability
+              : m?.comboHTMarket?.probability,
+        }));
+      }
+      return prevSafe;
+    });
       } catch (err) {
         console.error('Fetch error:', err);
         setError('Impossibile caricare i dati delle previsioni sulle 192 ore. Riprova tra poco.');
